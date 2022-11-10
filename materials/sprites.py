@@ -6,6 +6,8 @@ import pygame
 import os
 import config
 
+from itertools import permutations
+
 
 class BaseSprite(pygame.sprite.Sprite):
     images = dict()
@@ -150,30 +152,25 @@ class Jocke(Agent):
         super().__init__(x, y, file_name)
 
     def get_agent_path(self, coin_distance):
+
+        path = [i for i in range(1, len(coin_distance))]
+        perms = list(permutations(path))
+
         all_paths = []
-
-        while len(all_paths) < math.factorial(len(coin_distance) - 1):
-            current_path = [0]
-            all_paths.append(current_path)
-
-        # ovde dodajemo pocetne rute
-        first_digit = math.factorial(len(coin_distance) - 2)
-        cnt = 0
-        for i in range(0, len(all_paths)):
-            if i % first_digit == 0:
-                cnt += 1
-            all_paths[i].append(cnt)
-
         all_lengths = []
-        for i in all_paths:
-            i.append(0)
-            length = 0
-            for j in range(0, len(i) - 1):
-                length += coin_distance[j][j + 1]
-            all_lengths.append(length)
+        for perm in perms:
+            temp = list(perm)
+            path = [0] + temp + [0]
 
-        min_length = min(all_lengths)
-        min_path = all_paths[all_lengths.index(min_length)]
+            length = 0
+            for node in range(0, len(path) - 1):
+                length += coin_distance[path[node]][path[node + 1]]
+
+            all_lengths.append(length)
+            all_paths.append(path)
+
+        min_index = all_lengths.index(min(all_lengths))
+        min_path = all_paths[min_index]
 
         return min_path
 
