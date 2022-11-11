@@ -7,6 +7,7 @@ import os
 import config
 
 from itertools import permutations
+import copy
 
 
 class BaseSprite(pygame.sprite.Sprite):
@@ -172,6 +173,8 @@ class Jocke(Agent):
         min_index = all_lengths.index(min(all_lengths))
         min_path = all_paths[min_index]
 
+        pprint.pprint(coin_distance)
+
         return min_path
 
 
@@ -180,7 +183,32 @@ class Uki(Agent):
         super().__init__(x, y, file_name)
 
     def get_agent_path(self, coin_distance):
-        super().get_agent_path(coin_distance)
+
+        all_paths = []
+        for i in range(1, len(coin_distance)):
+            path = {"path": [0, i], "length": coin_distance[0][i]}
+            all_paths.append(path)
+
+        good_path = []
+        while True:
+            path = min(all_paths, key=lambda x: x['length'])
+            path_last = path["path"][len(path["path"]) - 1]
+            for i in range(1, len(coin_distance)):
+                new_path = copy.deepcopy(path)
+                if i not in new_path["path"]:
+                    new_path["length"] += coin_distance[path_last][i]
+                    new_path["path"].append(i)
+                    all_paths.append(new_path)
+
+                if len(new_path["path"]) == len(coin_distance):
+                    good_path = new_path["path"]
+
+            all_paths.remove(path)
+            if len(good_path) == len(coin_distance):
+                break
+
+        good_path.append(0)
+        return good_path
 
 
 class Micko(Agent):
