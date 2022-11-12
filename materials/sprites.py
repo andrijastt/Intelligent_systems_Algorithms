@@ -1,6 +1,7 @@
 import math
 import pprint
 import random
+import sys
 
 import pygame
 import os
@@ -143,8 +144,6 @@ class Aki(Agent):
             path.append(min_index)
             current = min_index
 
-        pprint.pprint(str(len(coin_distance)))
-
         return path + [0]
 
 
@@ -172,8 +171,6 @@ class Jocke(Agent):
 
         min_index = all_lengths.index(min(all_lengths))
         min_path = all_paths[min_index]
-
-        pprint.pprint(coin_distance)
 
         return min_path
 
@@ -215,5 +212,115 @@ class Micko(Agent):
     def __init__(self, x, y, file_name):
         super().__init__(x, y, file_name)
 
+    def generate_MST(self, coin_distance, includes):
+        distance = 0
+
+        edges_checked = []
+        edges_connected = 0
+        edges_needed = len(includes) - 1
+
+        if edges_needed == 0:
+            return distance
+
+        matrix_reachable = []
+        for i in range(0, len(coin_distance)):
+            row = []
+            for j in range(0, len(coin_distance)):
+                    if i != j or i not in includes or j not in includes:
+                        row.append(False)
+                    else:
+                        row.append(True)
+            matrix_reachable.append(row)
+
+        while edges_connected < edges_needed:
+            minimal_edge = sys.maxsize
+
+            for i in range(0, len(coin_distance)):
+                for j in range(0, len(coin_distance)):
+                    if i in includes and j in includes and coin_distance[i][j] < minimal_edge and coin_distance[i][j] != 0\
+                            and [i, j] not in edges_checked:
+                        minimal_edge = coin_distance[i][j]
+                        edge = [i, j]
+                        neg_edge = [j, i]
+
+            edges_checked.append(edge)
+            edges_checked.append(neg_edge)
+
+            if edges_connected == 0:
+                edges_connected += 1
+                distance += minimal_edge
+
+                matrix_reachable[edge[0]][edge[1]] = True
+                matrix_reachable[edge[1]][edge[0]] = True
+
+            else:
+                cycle = False
+                for i in range(0, len(includes)):
+                    if matrix_reachable[i][edge[0]] and matrix_reachable[i][edge[1]]:
+                        cycle = True
+                        break
+
+                if not cycle:
+                    edges_connected += 1
+                    distance += minimal_edge
+
+                    matrix_reachable[edge[0]][edge[1]] = True
+                    matrix_reachable[edge[1]][edge[0]] = True
+
+                    # azuriranje Matrice dostiznosti
+                    # for i in range(0, len(includes)):
+                    #     for j in range(0, len(includes)):
+                    #
+                    #         if matrix_reachable[i][j] and i != j:
+                    #             for k in range(0, len(includes)):
+                    #                 if k != i and matrix_reachable[j][k] and k != j:
+                    #                     matrix_reachable[i][k] = True
+
+                    # mozda krace resenje, smanjuje se slozenost
+                    for i in range(0, len(includes)):
+                        if matrix_reachable[i][edge[0]] and i != edge[0]:
+                            for j in range(0, len(includes)):
+                                if j != i and matrix_reachable[edge[0]][j] and edge[0] != j:
+                                    matrix_reachable[i][j] = True
+
+        return distance
+
     def get_agent_path(self, coin_distance):
-        super().get_agent_path(coin_distance)
+
+        all_paths = []
+        includes = []
+        for i in range(0, len(coin_distance)):
+            includes.append(i)
+
+        distance = self.generate_MST(coin_distance, includes)
+
+        for i in range(1, len(coin_distance)):
+            path = {"path": [0, i], "length": coin_distance[0][i], "distance": distance, "combined": coin_distance[0][i] + distance}
+            all_paths.append(path)
+
+        good_path = []
+        while True:
+            path = min(all_paths, key=lambda x: x['combined'])
+            path_last = path["path"][len(path["path"]) - 1]
+            for i in range(1, len(coin_distance)):
+                new_path = copy.deepcopy(path)
+                if i not in new_path["path"]:
+                    new_path["length"] += coin_distance[path_last][i]
+                    new_path["path"].append(i)
+                    temp = [x for x in includes if x not in new_path["path"]]
+                    temp.append(0)
+                    distance1 = self.generate_MST(coin_distance, temp)
+                    new_path["distance"] = distance1
+                    new_path["combined"] = new_path["length"] + distance1
+                    all_paths.append(new_path)
+
+                if len(new_path["path"]) == len(coin_distance):
+                    good_path = new_path["path"]
+
+            all_paths.remove(path)
+            if len(good_path) == len(coin_distance):
+                break
+
+        good_path.append(0)
+        return good_path
+
