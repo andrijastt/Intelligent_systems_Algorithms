@@ -188,6 +188,29 @@ class Uki(Agent):
         good_path = []
         while True:
             path = min(all_paths, key=lambda x: x['length'])
+
+            indices = [i for i,x in enumerate(all_paths) if x["length"] == path["length"]]
+            if len(indices) > 1:
+                max_path_len = 0
+                next_index = sys.maxsize
+                for indice in indices:
+                    if len(all_paths[indice]["path"]) > max_path_len:
+                        path = all_paths[indice]
+                        max_path_len = len(all_paths[indice]["path"])
+                        for i in range(1, len(coin_distance)):
+                            if i not in path["path"]:
+                                next_index = i
+                                break
+                    else:
+                        if len(all_paths[indice]["path"]) == max_path_len:
+                            for i in range(1, len(coin_distance)):
+                                if i not in all_paths[indice]["path"]:
+                                    if i < next_index:
+                                        next_index = i
+                                        path = all_paths[indice]
+                                        max_path_len = len(all_paths[indice]["path"])
+                                        break
+
             path_last = path["path"][len(path["path"]) - 1]
             for i in range(1, len(coin_distance)):
                 new_path = copy.deepcopy(path)
@@ -300,6 +323,29 @@ class Micko(Agent):
         good_path = []
         while True:
             path = min(all_paths, key=lambda x: x['combined'])
+
+            indices = [i for i, x in enumerate(all_paths) if x["combined"] == path["combined"]]
+            if len(indices) > 1:
+                max_path_len = 0
+                next_index = sys.maxsize
+                for indice in indices:
+                    if len(all_paths[indice]["path"]) > max_path_len:
+                        path = all_paths[indice]
+                        max_path_len = len(all_paths[indice]["path"])
+                        for i in range(1, len(coin_distance)):
+                            if i not in path["path"]:
+                                next_index = i
+                                break
+                    else:
+                        if len(all_paths[indice]["path"]) == max_path_len:
+                            for i in range(1, len(coin_distance)):
+                                if i not in all_paths[indice]["path"]:
+                                    if i < next_index:
+                                        next_index = i
+                                        path = all_paths[indice]
+                                        max_path_len = len(all_paths[indice]["path"])
+                                        break
+
             path_last = path["path"][len(path["path"]) - 1]
             for i in range(1, len(coin_distance)):
                 new_path = copy.deepcopy(path)
