@@ -185,31 +185,41 @@ class Uki(Agent):
             path = {"path": [0, i], "length": coin_distance[0][i]}
             all_paths.append(path)
 
-        good_path = []
         while True:
             path = min(all_paths, key=lambda x: x['length'])
 
-            indices = [i for i,x in enumerate(all_paths) if x["length"] == path["length"]]
+            indices = [i for i, x in enumerate(all_paths) if x["length"] == path["length"]]
+            selected_paths = []
+            for i in indices:
+                selected_paths.append(all_paths[i])
             if len(indices) > 1:
+
                 max_path_len = 0
-                next_index = sys.maxsize
                 for indice in indices:
                     if len(all_paths[indice]["path"]) > max_path_len:
                         path = all_paths[indice]
                         max_path_len = len(all_paths[indice]["path"])
+
+                indices1 = [i for i, x in enumerate(selected_paths) if len(x["path"]) == len(path["path"])]
+                indice_that_matters = indices1[0]
+
+                if len(indices1) > 1:
+                    min_next_index = sys.maxsize
+
+                    for indice in indices1:
+                        last_coin_collected = selected_paths[indice]["path"][len(selected_paths[indice]["path"]) - 1]
+                        min_path_size = sys.maxsize
                         for i in range(1, len(coin_distance)):
-                            if i not in path["path"]:
-                                next_index = i
-                                break
-                    else:
-                        if len(all_paths[indice]["path"]) == max_path_len:
-                            for i in range(1, len(coin_distance)):
-                                if i not in all_paths[indice]["path"]:
-                                    if i < next_index:
-                                        next_index = i
-                                        path = all_paths[indice]
-                                        max_path_len = len(all_paths[indice]["path"])
-                                        break
+                            if i != last_coin_collected and i < min_next_index and i not in selected_paths[indice]["path"] and\
+                                    min_path_size < coin_distance[last_coin_collected][i]:
+                                min_next_index = i
+                                indice_that_matters = indices1.index(indice)
+                        path = selected_paths[indice_that_matters]
+                else:
+                    path = selected_paths[indice_that_matters]
+
+            if len(path["path"]) == len(coin_distance) + 1:
+                return path["path"]
 
             path_last = path["path"][len(path["path"]) - 1]
             for i in range(1, len(coin_distance)):
@@ -217,17 +227,14 @@ class Uki(Agent):
                 if i not in new_path["path"]:
                     new_path["length"] += coin_distance[path_last][i]
                     new_path["path"].append(i)
+
+                    if len(new_path["path"]) == len(coin_distance):
+                        new_path["length"] += coin_distance[0][i]
+                        new_path["path"].append(0)
+
                     all_paths.append(new_path)
 
-                if len(new_path["path"]) == len(coin_distance):
-                    good_path = new_path["path"]
-
             all_paths.remove(path)
-            if len(good_path) == len(coin_distance):
-                break
-
-        good_path.append(0)
-        return good_path
 
 
 class Micko(Agent):
@@ -320,31 +327,42 @@ class Micko(Agent):
             path = {"path": [0, i], "length": coin_distance[0][i], "distance": distance, "combined": coin_distance[0][i] + distance}
             all_paths.append(path)
 
-        good_path = []
         while True:
             path = min(all_paths, key=lambda x: x['combined'])
 
             indices = [i for i, x in enumerate(all_paths) if x["combined"] == path["combined"]]
+            selected_paths = []
+            for i in indices:
+                selected_paths.append(all_paths[i])
             if len(indices) > 1:
+
                 max_path_len = 0
-                next_index = sys.maxsize
                 for indice in indices:
                     if len(all_paths[indice]["path"]) > max_path_len:
                         path = all_paths[indice]
                         max_path_len = len(all_paths[indice]["path"])
+
+                indices1 = [i for i, x in enumerate(selected_paths) if len(x["path"]) == len(path["path"])]
+                indice_that_matters = indices1[0]
+
+                if len(indices1) > 1:
+                    min_next_index = sys.maxsize
+
+                    for indice in indices1:
+                        last_coin_collected = selected_paths[indice]["path"][len(selected_paths[indice]["path"]) - 1]
+                        min_path_size = sys.maxsize
                         for i in range(1, len(coin_distance)):
-                            if i not in path["path"]:
-                                next_index = i
-                                break
-                    else:
-                        if len(all_paths[indice]["path"]) == max_path_len:
-                            for i in range(1, len(coin_distance)):
-                                if i not in all_paths[indice]["path"]:
-                                    if i < next_index:
-                                        next_index = i
-                                        path = all_paths[indice]
-                                        max_path_len = len(all_paths[indice]["path"])
-                                        break
+                            if i != last_coin_collected and i < min_next_index and i not in selected_paths[indice][
+                                "path"] and \
+                                    min_path_size < coin_distance[last_coin_collected][i]:
+                                min_next_index = i
+                                indice_that_matters = indices1.index(indice)
+                        path = selected_paths[indice_that_matters]
+                else:
+                    path = selected_paths[indice_that_matters]
+
+            if len(path["path"]) == len(coin_distance) + 1:
+                return path["path"]
 
             path_last = path["path"][len(path["path"]) - 1]
             for i in range(1, len(coin_distance)):
@@ -357,15 +375,11 @@ class Micko(Agent):
                     distance1 = self.generate_MST(coin_distance, temp)
                     new_path["distance"] = distance1
                     new_path["combined"] = new_path["length"] + distance1
+
+                    if len(new_path["path"]) == len(coin_distance):
+                        new_path["length"] += coin_distance[0][i]
+                        new_path["path"].append(0)
+
                     all_paths.append(new_path)
 
-                if len(new_path["path"]) == len(coin_distance):
-                    good_path = new_path["path"]
-
             all_paths.remove(path)
-            if len(good_path) == len(coin_distance):
-                break
-
-        good_path.append(0)
-        return good_path
-
